@@ -1,4 +1,5 @@
 # HTK
 HTK Speech Recognition Toolkit
 
-* offical site: http://htk.eng.cam.ac.uk/
+* Offical site: http://htk.eng.cam.ac.uk/
+* Current releases: HTK version 3.4.1 
