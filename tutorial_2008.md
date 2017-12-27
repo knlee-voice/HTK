@@ -1,4 +1,4 @@
-# K.-N.Lee's : 음성인식용 HTK 사용법 
+# 음성인식용 HTK 사용법 
 
 written by K.-N.Lee (최초 작성: 1998년 / egloos: 2008년)
 
