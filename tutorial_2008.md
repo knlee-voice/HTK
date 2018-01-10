@@ -362,8 +362,8 @@ HCOMPV 수행 후, hmm0/vFloors를 복사하고 수정하여 macros를 작성한
 
  * 학습하고자하는 문장수가 많은 경우, 
  
-파라메터의 값이 일정 임계치를 넘지 못해서 생기는 에러가 발생한다.(HTK Error solution 참고)
-이런 경우 병렬로 학습 문장들을 나누어서 학습한다. 
+파라메터의 값이 일정 임계치를 넘지 못해서 생기는 에러가 발생한다.(HTK Error solution 참고) <br>
+이런 경우 병렬로 학습 문장들을 나누어서 학습한다. <br>
 아래 예는 train-part1.scp와 train-part2.scp로 나누어 병렬 학습 후, HMM 모델을 합치는 방법이다.
 
 >> HERest -T 1 -C config1 -I phones0.mlf -t 250.0 150.0 1000.0 -S train-part1.scp -H hmm0/macros -H hmm0/hmmdefs -M hmm1 -p 1 monophones0 
@@ -375,9 +375,38 @@ HCOMPV 수행 후, hmm0/vFloors를 복사하고 수정하여 macros를 작성한
 
 ## 8. Silence와 Short-pause 결합
 
+우선 hmm3/hmmdef와 hmm3/macros를 hmm4/ 디렉토리로 복사한다.
+hmm4/hmmdefs에서 ‘sil’의 state3 부분을 ‘Q’의 state2로 복사하고, 다음과 같이 수정한다. (그림 3.9 참조)
+
+* sil.hed
+```
+AT 2 4 0.2 {sil.transP}
+AT 4 2 0.2 {sil.transP}
+AT 1 3 0.3 {Q.transP}
+TI silst {sil.state[3],Q.state[2]}
+```
+
 
 ## 9. Tied-State Triphone 생성 단계
 
+* mktri.led
+```
+WB  Q
+WB  sil
+TC
+```
+
+*  예) mktri.hed
+```
+CL triphones0
+TI T_IY {(*-IY+*,IY+*,*-IY).transP}
+TI T_EY {(*-EY+*,EY+*,*-EY).transP}
+TI T_EH {(*-EH+*,EH+*,*-EH).transP}
+…
+TI T_L {(*-L+*,L+*,*-L).transP}
+TI T_R {(*-R+*,R+*,*-R).transP}
+TI T_LI {(*-LI+*,LI+*,*-LI).transP}
+```
 
 ## 10. Word network 생성 방법
 
