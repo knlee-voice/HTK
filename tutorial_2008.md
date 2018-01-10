@@ -24,7 +24,7 @@ HTK에서는 녹음 툴로 HSLab이라는 명령어가 제공된다.
 (But, 학습시 레이블 파일을 사용하는 경우에는 레이블 파일의 형식에 따라 변환을 하여야 하나 명령어 옵션을 찾아보면, 다른 형식들을 지원하는 것이 있으므로 확인)
 
 * HTK 레이블 형식
-<pre>
+```
  0 4500000 sil사
  4500000 5000000 N
  5000000 5500000 AA
@@ -33,10 +33,10 @@ HTK에서는 녹음 툴로 HSLab이라는 명령어가 제공된다.
  13000000 13500000 sil
  
  (100ns단위)
-</pre>
+```
 
 * Xwaves 레이블 형식
-<pre>
+```
  signal s0001
  type 0
  comment created using xlabel Thu Jan 22 
@@ -50,7 +50,7 @@ HTK에서는 녹음 툴로 HSLab이라는 명령어가 제공된다.
     …
     1.300000   -1 A
     1.350000   -1 sil
- </pre>
+```
  
  
 ## 3. 트랜스크립션(Transcription) 파일 작성
@@ -62,7 +62,7 @@ HTK에서는 녹음 툴로 HSLab이라는 명령어가 제공된다.
 
 인식하고자하는 단어리스트들을 나열한 파일로서 한 라인의 단위는 인식하고자하는 디코딩 단위와 발음사전과 일치하여야 한다.
 * words.mlf
-<pre>
+```
  #!MLF!#
  "*/s0001.lab”
  나
@@ -75,13 +75,13 @@ HTK에서는 녹음 툴로 HSLab이라는 명령어가 제공된다.
  "*/s0002.lab"
  나
  ....
-</pre>
+```
 
 인식하고자하는 단어리스트들에 대응하는 폰열(Phone list)을 나열한 파일로서 한 라인에는 폰 하나씩 적는다. <br>
 문장의 시작에는 반드시 sil로 시작하고, 문장의 끝에도 sil로 끝난다.
 파일의 끝에는 마침표(.)로 문장의 끝을 구분한다.
 * phones0.mlf
-<pre>
+```
 #!MLF!#
 "*/s0001.lab”
 sil
@@ -106,14 +106,14 @@ sil
 "*/s0002.lab"
 N
 ....
-</pre>
+```
 
 phones0.mlf에 적힌 폰열(phone list)은 같다. <br>
 일반적으로 사전 단위의 구분에 따라 Q를 삽입하거나, 어절단위에 Q 삽입, 끊어읽기에 따라 Q를 삽입하여 스크립트를 작성한다.<br>
 어떻게 구분짓는 것이 인식률에 가장 좋은지는 아직 실험결과를 얻지 못한 상태이다.
 일반적으로 영어권에서는 단어단위가 끊어읽기 단위이기 때문에 한국어에서 고려되어야하는 사항과는 다르다.
 * phones1.mlf 
-<pre>
+```
 #!MLF!#
 "*/s0001.lab”
 sil
@@ -140,7 +140,7 @@ sil
 "*/s0002.lab"
 N
 ....
-</pre>
+```
 
 
 ## 4. 발음사전(Pronunciation Dictionary) 만들기
@@ -179,17 +179,17 @@ HTK에서 제공하는 HDMan 명령어는 영어 음성사전 작성에 사용�
 한국어의 경우 디코딩 단위에 따라서 이러한 사전과 단어열의 일대일 매칭이 올바른 학습용 발음열 트랜스크립션을 얻기 어렵기 때문에, 한국어에 맞는 학습용 발음열 생성기가 필요하다.
 
 * mkphones0.led
-<pre>
+```
  EX
  IS  sil  sil
  DE  Q
-</pre>
+```
 
 * mkphones1.led
-<pre>
+```
  EX
  IS  sil  sil
-</pre>
+```
 
 >> $ HLEd -l '*' -d dict -i phones0.mlf mkphones0.led words.mlf
 
@@ -209,7 +209,7 @@ HTK에서 제공하는 feature 타입은 책을 참고하세요.
 </pre>
 
 * config파일
-<pre>
+```
  # Coding parameters
  TARGETKIND=MFCC_0
  TARGETRATE=100000.0
@@ -225,7 +225,7 @@ HTK에서 제공하는 feature 타입은 책을 참고하세요.
  TARGETLABEL=HTK
  TARGETFORMAT=HTK
  NONUMESCAPES=T 
-</pre>
+```
 
 __부가설명__
 
@@ -234,16 +234,143 @@ SOURCEFORMAT=WAVEFORM (웨이브 형식인 경우) <br>
 NONUMESCAPES = T는 프린트할때(WriteString, ReWriteString) 한글이 8bit 숫자로 바뀌지 않도록 하는 옵션.
 
 * Configuration File (16bit, 16KHz 음성 파일 기준)
-<pre>
+```
  TARGETKIND=MFCC_0_D_A
  #SOURCEFORMAT=NOHEAD
  ...
-</pre>
+```
 
 >> HCopy -T 1 -C config -S codetr.scp
 
 
 ## 7. Monophone 생성 단계
+
+각 명령어를 실행하기 전에 다음 파일 및 필요한 디렉토리 hmm0 ~ hmm15, lib를 미리 생성해야 한다. 
+'mkdir ~'...  HTK 자체에서 자동으로 디렉토리를 생성해 주지 않는다. 
+디렉토리가 없어도 실행은 되지만, 지정한 디렉토리에 계산된 값을 저장할 위치를 찾지 못한 상태로 프로그램이 종료되면 다시 실험을 수행해야하므로 반드시 디렉토리가 있는지 없는지 확인한 다음, 실험을 수행한다. 
+또한 실험에 사용되는 파라메터 파일 및 스크립트가 필요하다.
+
+* Master Macro File(MMF)
+* proto
+```
+~o <VecSize> 39 <MFCC_0_D_A>
+~h "proto"
+<BeginHMM>
+   <NumStates> 5
+   <State> 2
+      <Mean> 39
+        0.0  0.0  0.0  0.0  …
+      <Variance> 39
+        1.0  1.0  1.0  1.0  …
+   <State> 3
+      <Mean> 39
+        0.0  0.0  0.0  0.0  …
+      <Variance> 39
+        1.0  1.0  1.0  1.0  …
+   <State> 4
+      <Mean> 39
+        0.0  0.0  0.0  0.0  …
+      <Variance> 39
+        1.0  1.0  1.0  1.0  …
+   <TransP> 5
+        0.0  1.0  0.0  0.0  0.0
+        0.0  0.6  0.4  0.0  0.0
+        0.0  0.0  0.6  0.4  0.0
+        0.0  0.0  0.0  0.7  0.3
+        0.0  0.0  0.0  0.0  0.0
+<EndHMM>
+```
+
+* hmm0/hmmdefs
+```
+~h “sil”
+<BeginHMM>
+   <NumStates> 5
+   <State> 2
+      <Mean> 39
+        0.0  0.0  0.0  0.0  …
+      <Variance> 39
+        1.0  1.0  1.0  1.0  …
+   <State> 3
+      <Mean> 39
+        0.0  0.0  0.0  0.0  …
+      <Variance> 39
+        1.0  1.0  1.0  1.0  …
+   <State> 4
+      <Mean> 39
+        0.0  0.0  0.0  0.0  …
+      <Variance> 39
+        1.0  1.0  1.0  1.0  …
+   <TransP> 5
+        0.0  1.0  0.0  0.0  0.0
+        0.0  0.6  0.4  0.0  0.0
+        0.0  0.0  0.6  0.4  0.0
+        0.0  0.0  0.0  0.7  0.3
+        0.0  0.0  0.0  0.0  0.0
+<EndHMM>
+
+~h “IY”
+<BeginHMM>
+<NumStates> 5
+   <State> 2
+      <Mean> 39
+        0.0  0.0  0.0  0.0  …
+      <Variance> 39
+        1.0  1.0  1.0  1.0  …
+…
+```
+
+* train.scp
+<pre>
+/user/speech/DB/s0001.mfc
+/user/speech/DB/s0002.mfc
+…
+</pre>
+
+__초기 mean과 variance 값 계산__
+
+>> HCompV -C config1 -f 0.01 -m -S train.scp -M hmm0 proto
+
+scan a set of data file / global mean과 variance 계산 
+모든 gaussian에 같은 mean과 variance 할당
+
+HCOMPV 수행 후, hmm0/vFloors를 복사하고 수정하여 macros를 작성한다.
+
+* hmm0/vFloors (예)
+```
+<Variance> 39
+ 1.361697e-01 5.078497e-02 … 3.495922e-04 
+```
+* macros
+```
+~o
+<VecSize> 39
+<MFCC_0_D_A>
+~v varFloor1
+<Variance> 39
+ 1.361697e-01 5.078497e-02 … 3.495922e-04
+```
+
+#### Monophone 모델 학습 (반복)
+
+>> HERest -T 1 -C config1 -I phones0.mlf -t 250.0 150.0 1000.0 -S train.scp -H hmm0/macros -H hmm0/hmmdefs -M hmm1 monophones0 
+
+>> HERest -T 1 -C config1 -I phones0.mlf -t 250.0 150.0 1000.0 -S train.scp -H hmm1/macros -H hmm1/hmmdefs -M hmm2 monophones0
+
+>> HERest -T 1 -C config1 -I phones0.mlf -t 250.0 150.0 1000.0 -S train.scp -H hmm2/macros -H hmm2/hmmdefs -M hmm3 monophones0
+
+
+ * 학습하고자하는 문장수가 많은 경우, 
+ 
+파라메터의 값이 일정 임계치를 넘지 못해서 생기는 에러가 발생한다.(HTK Error solution 참고)
+이런 경우 병렬로 학습 문장들을 나누어서 학습한다. 
+아래 예는 train-part1.scp와 train-part2.scp로 나누어 병렬 학습 후, HMM 모델을 합치는 방법이다.
+
+>> HERest -T 1 -C config1 -I phones0.mlf -t 250.0 150.0 1000.0 -S train-part1.scp -H hmm0/macros -H hmm0/hmmdefs -M hmm1 -p 1 monophones0 
+
+>> HERest -T 1 -C config1 -I phones0.mlf -t 250.0 150.0 1000.0 -S train-part2.scp -H hmm0/macros -H hmm0/hmmdefs -M hmm1 -p 2 monophones0
+
+>> HERest -T 1 -C config1 -t 250.0 150.0 1000.0 -H hmm0/macros -H hmm0/hmmdefs -M hmm1 -p 0 monophones0 hmm1/*.acc
 
 
 ## 8. Silence와 Short-pause 결합
