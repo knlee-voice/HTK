@@ -12,7 +12,7 @@ Steve Young, Dan Kershaw, Julian Odell, Dave Ollason, Valtcho Valtchev, Phil Woo
 일반적으로 구축하고자하는 목적에 맞게 텍스트를 준비하고, 발성 음성을 녹음하는 작업이 수반된다. 
 HTK에서는 녹음 툴로 HSLab이라는 명령어가 제공된다.
 
->> $HSLab  -C  HAUDIO  noname  
+>> $HSLab  -C  HAUDIO  noname
 
 
 ## 2. 레이블 파일 작성
@@ -174,8 +174,73 @@ HTK에서 제공하는 HDMan 명령어는 영어 음성사전 작성에 사용�
 
 ## 5.  HLED 명령어와 발음사전을 이용하여 트랜스크립션작성하기
 
+발음 사전의 표제어와 words.mlf에 라인별로 기재된 단어를 매치하여 phones0.mlf와 phones1.mlf를 생성하는 명령어이다. 
+사전에는 해당 표제어에 대한 발음열 리스트가 기재되어 있고, 영어권의 경우, 단어 단위가 디코딩 단위이므로 일대일 매칭으로 트랜스크립션을 얻을 수 있다.
+한국어의 경우 디코딩 단위에 따라서 이러한 사전과 단어열의 일대일 매칭이 올바른 학습용 발음열 트랜스크립션을 얻기 어렵기 때문에, 한국어에 맞는 학습용 발음열 생성기가 필요하다.
+
+* mkphones0.led
+<pre>
+ EX
+ IS  sil  sil
+ DE  Q
+</pre>
+
+* mkphones1.led
+<pre>
+ EX
+ IS  sil  sil
+</pre>
+
+>> $ HLEd -l '*' -d dict -i phones0.mlf mkphones0.led words.mlf
+
+>> $ HLEd -l '*' -d dict -i phones1.mlf mkphones1.led words.mlf
+
 
 ## 6. 음성 특징 추출 (Feature Extraction) : step5 - Coding the Data
+사람의 음성을 인식하기 위해서는 음성의 특징들을 뽑아 사용합니다. 
+입력된 음성 파일로부터 특징 추출 과정을 수행하는 단계로 일반적으로 LPC나 MFCC를 사용합니다. 
+HTK에서 제공하는 feature 타입은 책을 참고하세요.
+
+* 예) codetr.scp
+<pre>
+ /user/speech/DB/s0001.wav   /user/speech/DB/s0001.mfc
+ /user/speech/DB/s0002.wav   /user/speech/DB/s0002.mfc
+ ...                         ...
+</pre>
+
+* config파일
+<pre>
+ # Coding parameters
+ TARGETKIND=MFCC_0
+ TARGETRATE=100000.0
+ SAVECOMPRESSED=T
+ SAVEWITHCRC=T
+ WINDOWSIZE=250000.0
+ USEHAMMING=T
+ PREEMCOEF=0.97
+ NUMCHANS=26
+ CEPLIFTER=22
+ NUMCEPS=12
+ SOURCERATE=625
+ TARGETLABEL=HTK
+ TARGETFORMAT=HTK
+ NONUMESCAPES=T 
+</pre>
+
+__부가설명__
+
+SOURCEFORMAT=NOHEAD (헤더가 없는 경우) <br>
+SOURCEFORMAT=WAVEFORM (웨이브 형식인 경우) <br>
+NONUMESCAPES = T는 프린트할때(WriteString, ReWriteString) 한글이 8bit 숫자로 바뀌지 않도록 하는 옵션.
+
+* Configuration File (16bit, 16KHz 음성 파일 기준)
+<pre>
+ TARGETKIND=MFCC_0_D_A
+ #SOURCEFORMAT=NOHEAD
+ ...
+</pre>
+
+>> HCopy -T 1 -C config -S codetr.scp
 
 
 ## 7. Monophone 생성 단계
