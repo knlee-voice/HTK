@@ -396,7 +396,14 @@ WB  sil
 TC
 ```
 
-*  예) mktri.hed
+wintri.mlf는 학습에서 사용된 triphone list로 aligned.mlf를 이용하여 재구성된 트랜스크립션 파일이다. 
+HLEd를 사용하면 wintri.mlf와 triphones0가 자동으로 생긴다.
+
+>> HLEd -n triphones0 -l '*' -i lib/wintri.mlf mktri.led aligned.mlf 
+ 
+>> % mktrihed < monophones0 > mktri.hed
+
+*  mktri.hed (예)
 ```
 CL triphones0
 TI T_IY {(*-IY+*,IY+*,*-IY).transP}
@@ -408,10 +415,88 @@ TI T_R {(*-R+*,R+*,*-R).transP}
 TI T_LI {(*-LI+*,LI+*,*-LI).transP}
 ```
 
+>> HHEd -B -H hmm9/macros -H hmm9/hmmdefs -M hmm10 mktri.hed monophones1
+
+트라이폰 모델 학습
+
+>> HERest -T 1 -C config1 -I lib/wintri.mlf -s stats -t 250.0 150.0 1000.0 -S train.scp -H hmm10/macros -H hmm10/hmmdefs -M hmm11 triphones0
+
+>> HERest -T 1 -C config1 -I lib/wintri.mlf -s stats -t 250.0 150.0 1000.0 -S train.scp -H hmm11/macros -H hmm11/hmmdefs -M hmm12 triphones0
+
+* tree.hed - Question set (예) / 자음의 경우, 음의 분류기준에 따라 state-tying.
+```
+RO 100.0 stats
+TR 0
+QS "L_Stop-Beg"  {P-*,B-*,PQ-*,PP-*,PH-*} 
+QS "L_Stop-Mid"  
+{D-*,TQ-*,T-*,TT-*,TH-*} 
+QS "L_Stop-End"  {K-*,G-*,KQ-*,KK-*,KH-*} 
+QS "R_Stop-Beg"  {*+P,*+B,*+PQ,*+PP,*+PH} 
+QS "R_Stop-Mid"  {*+D,*+TQ,*+T,*+TT,*+TH} 
+QS "R_Stop-End"  {*+K,*+G,*+KQ,*+KK,*+KH}
+QS "L_Affr"      {TS-*,JH-*,TST-*,CH-*} 
+QS "L_Fric"      {S-*,SH-*,SS-*,SHS-*} 
+QS "L_Nasal"     {M-*,N-*,NI-*,NX-*} 
+QS "L_Liquid"    {R-*,L-*,LI-*} 
+QS "R_Affr"      {*+TS,*+JH,*+TST,*+CH} 
+QS "R_Fric"      {*+S,*+SH,*+SS,*+SHS} 
+QS "R_Nasal"     {*+M,*+N,*+NI,*+NX} 
+QS "R_Liquid"    {*+R,*+L,*+LI} 
+QS "L_IY"       {IY-*} 
+… 
+QS "L_R"        {R-*} 
+QS "L_LI"       {LI-*} 
+QS "R_IY"       {*+IY}
+```
+
+Question을 가지고 tiedlist를 만드는 과정
+
+>> HHEd -H hmm12/macros -H hmm12/hmmdefs -M hmm13 tree.hed triphones0 > log
+
+Tiedlist 트라이폰 모델을 학습하는 과정
+
+>> HERest -T 1 -C config1 -I lib/wintri.mlf -s stats -t 250.0 150.0 1000.0 -S train.scp -H hmm13/macros -H hmm13/hmmdefs -M hmm14 tiedlist
+
+>> HERest -T 1 -C config1 -I lib/wintri.mlf -s stats -t 250.0 150.0 1000.0 -S train.scp -H hmm14/macros -H hmm14/hmmdefs -M hmm15 tiedlist
+
+
 ## 10. Word network 생성 방법
+
+FSN wdnet 작성: 의미문법 gram 작성 (HTK book 참조)
+
+>> HParse  -C  config1  gram  wdnet
+
+back-off bigram : 통계적 언어모델
+
+>> HLStats -b bigfn -o wlist words.mlf
+
+>> HBuild -n bigfn wlist wdnet
+
 
 ## 11. 인식 단계
 
+일반적으로 학습 데이터와 테스트 데이터를 분리하여 인식 실험을 한다. 
+간단하게 동작이 잘 되는지를 확인하기 위해 학습 데이터를 이용해 확인하는 경우도 있다. 
+테스트 데이터를 선정하는 방법 또한 다양하다. 
+선별된 테스트 데이터는 학습시 발생한 트라이폰 리스트에 없는 경우가 생겨 네트웍 loading시 에러가 나는 경우가 발생한다. <br>
+이때에는 tiedlist를 만드는 부분부터 다시 확인하여 테스트 데이터 내에 생길 수 있는 트라이폰 리스트가 모두 포함될 수 있도록 한다.
+
+>> HVite -C config1 -T 33 -H hmm15/macros -H hmm15/hmmdefs -S train.scp -l '*'-o ST  -i recout.mlf(출력화일) -w wdnet(언어모델 네트웍) -t 200(beam threshold) -p 0.0 -s 5.0 dict(인식사전) tiedlist(HMM리스트)
+
+>> HVite -C config1 -T 33 -H hmm15/macros -H hmm15/hmmdefs -S test.scp -l '*'-o ST  -i recout-test.mlf -w wdnet -t 250(beam threshold) -p 0.0 -s 5.0 dict tiedlist
+
+Option 설명 : <br>
+  -t : Beam threshold 설정, default는 무한 대여서 인식 시간이 무지 오래걸립니다. 경험치로 200~250 정도면 큰 차이없이 결과를 얻을 수 있을겁니다. 
+  숫자가 적을수록 빔 폭이 작은 대신 인식속도는 빨라집니다.
+  -s : Langage Scale Factor 
+  -p : Insertion Penalty
+  
 
 ## 12. 인식 결과 평가
+
+testref.mlf는 인식할 문장 순서대로 정답을 기술한 내용이 들어있어야 한다. (words.mlf와 비슷) <br>
+recout.mlf는 인식결과 파일로서, SILENCE 등은 제외하고 인식결과를 평가한다. (-z SILENCE) <br>
+(단, 이 프로그램을 돌리기 위해서는 위 HVITE에서 -o ST 옵션이 주어져야만 됨.)
+
+>> HResults  -I testref.mlf  tiedlist  recout1.mlf
 
